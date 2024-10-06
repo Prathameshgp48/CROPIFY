@@ -1,0 +1,22 @@
+Sample Input 1:
+State: Maharashtra
+City: Pune
+N: 85
+P: 60
+K: 40
+Temperature: 25.0 °C
+Humidity: 80.0 %
+pH: 6.8
+Rainfall: 200.0 mm
+
+
+Sample Input 2:
+State: Tamil Nadu
+City: Coimbatore
+N: 65
+P: 45
+K: 35
+Temperature: 22.0 °C
+Humidity: 85.0 %
+pH: 6.5
+Rainfall: 180.0 mm
