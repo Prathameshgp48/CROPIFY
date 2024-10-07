@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 import requests
 import config
-import joblib  # Use joblib instead of pickle
+import joblib
 import io
 import torch
 from torchvision import transforms
@@ -14,6 +14,7 @@ from utils.model import ResNet9
 from utils.disease import disease_dic
 from utils.fertilizer import fertilizer_dic
 import os
+import logging  # Add logging for debugging
 
 # ==============================================================================================
 
@@ -46,8 +47,10 @@ disease_model.eval()
 # Loading crop recommendation model using joblib
 base_dir = os.path.dirname(os.path.abspath(__file__))
 crop_recommendation_model_path = os.path.join(base_dir, 'models', 'RandomForest.joblib')
-print(crop_recommendation_model_path)
 crop_recommendation_model = joblib.load(crop_recommendation_model_path)
+
+# Set up logging for debugging
+logging.basicConfig(level=logging.INFO)
 
 # =========================================================================================
 
@@ -70,8 +73,10 @@ def weather_fetch(city_name):
         y = x["main"]
         temperature = round((y["temp"] - 273.15), 2)  # Convert from Kelvin to Celsius
         humidity = y["humidity"]
+        logging.info(f"Weather for {city_name} - Temperature: {temperature}, Humidity: {humidity}")
         return temperature, humidity
     else:
+        logging.error(f"City {city_name} not found!")
         return None
 
 def predict_image(img, model=disease_model):
@@ -135,11 +140,24 @@ def crop_prediction():
         rainfall = float(request.form['rainfall'])
         city = request.form.get("city")
 
-        if weather_fetch(city) is not None:
-            temperature, humidity = weather_fetch(city)
-            data = np.array([[N, P, K, temperature, humidity, ph, rainfall]])
+        # Fetch weather details for the city
+        weather = weather_fetch(city)
+        if weather is not None:
+            temperature, humidity = weather
+
+            # Log input features for debugging
+            logging.info(f"Input features: N={N}, P={P}, K={K}, temperature={temperature}, humidity={humidity}, pH={ph}, rainfall={rainfall}")
+            
+            # Ensure that the input data has the correct column names
+            columns = ['N', 'P', 'K', 'temperature', 'humidity', 'ph', 'rainfall']
+            data = pd.DataFrame([[N, P, K, temperature, humidity, ph, rainfall]], columns=columns)
+            
+            # Make the prediction
             my_prediction = crop_recommendation_model.predict(data)
             final_prediction = my_prediction[0]
+
+            # Log the prediction for debugging
+            logging.info(f"Crop prediction: {final_prediction}")
 
             return render_template('crop-result.html', prediction=final_prediction, title=title)
         else:
@@ -194,7 +212,7 @@ def disease_prediction():
             prediction = Markup(str(disease_dic[prediction]))
             return render_template('disease-result.html', prediction=prediction, title=title)
         except Exception as e:
-            print(f"Error during prediction: {e}")
+            logging.error(f"Error during prediction: {e}")
             return render_template('disease.html', title=title)
 
     return render_template('disease.html', title=title)
