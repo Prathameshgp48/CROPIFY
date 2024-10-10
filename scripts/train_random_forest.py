@@ -7,7 +7,7 @@ import os
 
 print(os.getcwd()) 
 # Load the dataset
-data = pd.read_csv('app/Data/Crop_recommendation.csv')
+data = pd.read_csv('Data-processed/Crop_recommendation.csv')
 X = data.iloc[:, :-1]  # Features
 y = data.iloc[:, -1]   # Labels
 
